@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - "*"
+      - feature/shitty_tests
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
