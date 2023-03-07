@@ -1,5 +1,6 @@
 plugins {
     id 'com.android.application'
+    id 'jacoco'
     id "org.sonarqube" version "3.5.0.2730"
 }
 
@@ -27,6 +28,32 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    ////////// 4. add testOptions //////////
+    testOptions {        
+        unitTests.all {
+            useJUnitPlatform()
+            finalizedBy jacocoTestReport
+        }
+    }
+}
+
+////////// 3. add jacocoTestReport task like so //////////
+task jacocoTestReport(type: JacocoReport, dependsOn: 'testDebugUnitTest') {   
+
+    reports {
+        xml.enabled true
+        
+        //////////  5. xml.destination must be same as sonaqube property  //////////
+        xml.destination file("${project.projectDir}/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml")  
+    }
+
+    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
+    def debugTree = fileTree(dir: "${buildDir}/intermediates/javac/debug", excludes: fileFilter)
+    def mainSrc = "${project.projectDir}/src/main/java"
+
+    sourceDirectories.from = files([mainSrc])
+    classDirectories.from = files([debugTree])
+    executionData.from = files("${buildDir}/jacoco/testDebugUnitTest.exec")
 }
 
 sonarqube {
@@ -34,6 +61,10 @@ sonarqube {
     property "sonar.projectKey", "SE2TutoriumHoi_Test"
     property "sonar.organization", "se2tutoriumhoi"
     property "sonar.host.url", "https://sonarcloud.io"
+    property "sonar.java.coveragePlugin", "jacoco"
+        
+    ////////// 5. property same as xml.destination of jacocoTestReport //////////
+    property "sonar.coverage.jacoco.xmlReportPaths", "${project.projectDir}/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
   }
 }
 
@@ -42,7 +73,10 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.8.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    testImplementation 'junit:junit:4.13.2'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
